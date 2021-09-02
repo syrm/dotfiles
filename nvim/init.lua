@@ -1,7 +1,9 @@
 -------------------- HELPERS -------------------------------
+
 local cmd = vim.cmd  -- to execute Vim commands e.g. cmd('pwd')
 local fn = vim.fn    -- to call Vim functions e.g. fn.bufnr()
 local g = vim.g      -- a table to access global variables
+local bo = vim.bo    -- buffer scoped
 local opt = vim.opt  -- to set options
 
 local function map(mode, lhs, rhs, opts)
@@ -11,19 +13,22 @@ local function map(mode, lhs, rhs, opts)
 end
 
 --------------------- INIT ---------------------------------
-local install_path = fn.stdpath('data') .. '/site/pack/paqs/start/paq-nvim'
 
-if fn.empty(fn.glob(install_path)) > 0 then
-  fn.system({'git', 'clone', '--depth=1', 'https://github.com/savq/paq-nvim.git', install_path})
+local install_path_paq = fn.stdpath('data') .. '/site/pack/paqs/start/paq-nvim'
+
+if fn.isdirectory(install_path_paq) == 0 then
+  fn.system({'git', 'clone', '--depth=1', 'https://github.com/savq/paq-nvim.git', install_path_paq})
 end
 
-local install_path = fn.stdpath('data') .. '/site/pack/phpactor'
+local install_path_phpactor = fn.stdpath('data') .. '/site/pack/phpactor'
 
-if fn.empty(fn.glob(install_path)) > 0 then
-  fn.system({'git', 'clone', '--depth=1', 'https://github.com/phpactor/phpactor.git', install_path})
+if fn.isdirectory(install_path_phpactor) == 0 then
+  fn.system({'git', 'clone', '--depth=1', 'https://github.com/phpactor/phpactor.git', install_path_phpactor})
+  fn.system({'composer', 'install', '-d', install_path_phpactor})
 end
 
 -------------------- PLUGINS -------------------------------
+
 cmd 'packadd paq-nvim'                  -- load the package manager
 local paq = require('paq-nvim').paq     -- a convenient alias
 paq {'savq/paq-nvim', opt = true}       -- paq-nvim manages itself
@@ -40,6 +45,7 @@ paq {'kyazdani42/nvim-tree.lua'}        -- file tree
 paq {'akinsho/nvim-bufferline.lua'}     -- buffer design
 
 -------------------- COLORSCHEME ---------------------------
+
 paq {'sainnhe/edge'}
 paq {'codicocodes/tokyonight.nvim'}
 g.tokyonight_style='storm'
@@ -49,6 +55,7 @@ g.tokyonight_dark_sidebar=false
 g.tokyonight_transparent_sidebar=true
 
 -------------------- OPTIONS -------------------------------
+
 opt.completeopt = {'menuone', 'noinsert', 'noselect'}  -- Completion options
 opt.expandtab = true                -- Use spaces instead of tabs
 opt.hidden = true                   -- Enable background buffers
@@ -69,11 +76,40 @@ opt.tabstop = 2                     -- Number of spaces tabs count for
 opt.termguicolors = true            -- True color support
 opt.wildmode = {'list', 'longest'}  -- Command-line completion mode
 opt.wrap = false                    -- Disable line wrap
+bo.swapfile = false
+g.mapleader=' '
+g.completion_chain_complete_list = {
+  {complete_items = {'lsp', 'snippet', 'ins-complete'}}
+}
 
 -------------------- MAPPINGS ------------------------------
+
 map('', '<leader>c', '"+y')       -- Copy to clipboard in normal, visual, select and operator modes
 map('i', '<C-u>', '<C-g>u<C-u>')  -- Make <C-u> undo-friendly
 map('i', '<C-w>', '<C-g>u<C-w>')  -- Make <C-w> undo-friendly
+
+map('n', 'c', 'h', { noremap = true }) -- left
+map('n', 'r', 'l', { noremap = true }) -- right
+map('n', 't', 'j', { noremap = true }) -- up
+map('n', 's', 'k', { noremap = true }) -- down
+map('n', '<C-t>', '<C-u>', { noremap = true }) -- 1/2 page up
+map('n', '<C-s>', '<C-d>', { noremap = true }) -- 1/2 page down
+map('n', '<leader>,', '<cmd>lua vim.lsp.diagnostic.goto_prev()<CR>')
+map('n', '<leader>;', '<cmd>lua vim.lsp.diagnostic.goto_next()<CR>')
+map('n', '<leader>a', '<cmd>lua vim.lsp.buf.code_action()<CR>')
+map('n', '<leader>d', '<cmd>lua vim.lsp.buf.definition()<CR>')
+map('n', '<leader>f', '<cmd>lua vim.lsp.buf.formatting()<CR>')
+map('n', '<leader>h', '<cmd>lua vim.lsp.buf.hover()<CR>')
+map('n', '<leader>m', '<cmd>lua vim.lsp.buf.rename()<CR>')
+map('n', '<leader>r', '<cmd>lua vim.lsp.buf.references()<CR>')
+map('n', '<leader>s', '<cmd>lua vim.lsp.buf.document_symbol()<CR>')
+map('n', '<leader>éf', "<cmd>lua require('telescope.builtin').find_files()<CR>")
+map('n', '<leader>ég', "<cmd>lua require('telescope.builtin').live_grep()<CR>")
+map('n', '<leader>éb', "<cmd>lua require('telescope.builtin').buffers()<CR>")
+map('n', '<leader>éh', "<cmd>lua require('telescope.builtin').help_tags()<CR>")
+map('', '<leader><leader>', ':HopWord<CR>')
+map('', '<leader>q', ':wq<CR>')
+map('', '<leader>w', ':w<CR>')
 
 -- <Tab> to navigate the completion menu
 map('i', '<C-t>', 'pumvisible() ? "\\<C-p>" : "\\<C-t>"', {expr = true})
@@ -82,11 +118,93 @@ map('i', '<C-s>', 'pumvisible() ? "\\<C-n>" : "\\<C-s>"', {expr = true})
 map('n', '<C-l>', '<cmd>noh<CR>')    -- Clear highlights
 map('n', '<leader>o', 'm`o<Esc>``')  -- Insert a newline in normal mode
 
+map('', '<leader>t', ':bprev<CR>')
+map('', '<leader>s', ':bnext<CR>')
+map('', '<leader>bd', ':bd<CR>')
+
+map('n', '<leader>pt', ':NvimTreeToggle<CR>')
+map('n', '<leader>pf', ':NvimTreeFindFile<CR>')
+map('n', '<leader>pp', ':NvimTreeFocus<CR>')
+
+--[[
+map('n', 'é', 'w', { noremap = true }) -- move foreward one word
+map('n', 'É', 'W', { noremap = true }) -- foreward word
+map('n', 'w', '<C-w>', { noremap = true })
+map2('n', 'c', 'h', { noremap = true }) -- left
+map2('n', 'r', 'l', { noremap = true }) -- right
+map2('n', 't', 'j', { noremap = true }) -- up
+map2('n', 's', 'k', { noremap = true }) -- down
+map('n', 'C', 'H', { noremap = true }) -- home cursor - goto first line on screen
+map('n', 'R', 'L', { noremap = true }) -- goto last line
+map('n', 'T', 'J', { noremap = true }) -- join current line with the next line
+map('n', 'S', 'K', { noremap = true }) -- unbound
+map('n', 'zs', 'zj', { noremap = true }) -- ? move down one line
+map('n', 'zt', 'zk', { noremap = true }) -- ? move up one line
+map('n', 'j', 't', { noremap = true })   -- jump before character found
+map('n', 'J', 'T', { noremap = true })   -- backward version of t
+map('n', 'l', 'c', { noremap = true })   -- change command
+map('n', 'L', 'C', { noremap = true })   -- change to end of line
+map('n', 'h', 'r', { noremap = true })   -- replace single character
+map('n', 'H', 'R', { noremap = true })   -- replace mode - replaces through end of current line, then inserts
+map('n', 'k', 's', { noremap = true })   -- substitute single character with new text
+map('n', 'K', 'S', { noremap = true })   -- substitute entire line - deletes line, enters insertion mode
+map('n', ']k', ']s', { noremap = true }) -- ?
+map('n', '[k', '[s', { noremap = true }) -- ?
+map('n', 'gs', 'gk', { noremap = true }) -- ?
+map('n', 'gt', 'gj', { noremap = true }) -- ?
+map('n', 'wt', '<C-w>j', { noremap = true }) -- ?
+map('n', 'ws', '<C-w>k', { noremap = true }) -- ?
+map('n', 'wc', '<C-w>h', { noremap = true }) -- ?
+map('n', 'wr', '<C-w>l', { noremap = true }) -- ?
+map('n', 'wd', '<C-w>c', { noremap = true }) -- ?
+map('n', 'wo', '<C-w>s', { noremap = true }) -- ?
+map('n', 'wp', '<C-w>o', { noremap = true }) -- ?
+
+map('o', 'aé', 'aw', { noremap = true })
+map('o', 'aÉ', 'aW', { noremap = true })
+map('o', 'ié', 'iw', { noremap = true })
+map('o', 'iÉ', 'iW', { noremap = true })
+map('n', 'W', '<C-w><C-w>', { noremap = true })
+
+map('n', 'T', 'J', { noremap = true })
+map('n', 'S', 'K', { noremap = true })
+map('n', 'zs', 'zj', { noremap = true })
+map('n', 'zt', 'zk', { noremap = true })
+map('n', 'j', 't', { noremap = true })
+map('n', 'J', 'T', { noremap = true })
+map('n', 'l', 'c', { noremap = true })
+map('n', 'L', 'C', { noremap = true })
+map('n', 'h', 'r', { noremap = true })
+map('n', 'H', 'R', { noremap = true })
+map('n', 'k', 's', { noremap = true })
+map('n', 'K', 'S', { noremap = true })
+map('n', 'gs', 'gk', { noremap = true })
+map('n', 'gt', 'gj', { noremap = true })
+map('n', 'gb', 'gT', { noremap = true })
+map('n', 'gé', 'gT', { noremap = true })
+map('n', 'g"', 'g0', { noremap = true })
+map('n', 'wt', '<C-w>j', { noremap = true })
+map('n', 'ws', '<C-w>k', { noremap = true })
+map('n', 'wc', '<C-w>h', { noremap = true })
+map('n', 'wr', '<C-w>l', { noremap = true })
+map('n', 'wd', '<C-w>c', { noremap = true })
+map('n', 'wo', '<C-w>s', { noremap = true })
+map('n', 'wp', '<C-w>o', { noremap = true })
+map('n', 'è', 'circon', { noremap = true })
+map('n', 'È', '0', { noremap = true })
+map('', '<C-t>', '<C-n>', { noremap = true })
+map('i', '<C-t>', '<C-n>', { noremap = true })
+map('', '<C-s>', '<C-p>', { noremap = true })
+map('i', '<C-s>', '<C-p>', { noremap = true })
+]]--
+
 -------------------- TREE-SITTER ---------------------------
+
 local ts = require 'nvim-treesitter.configs'
 ts.setup {ensure_installed = 'maintained', highlight = {enable = true}}
 
 -------------------- BUFFER --------------------------------
+
 local bl = require 'bufferline'
 bl.setup{
     options = {
@@ -111,38 +229,59 @@ bl.setup{
     }
   }
 
+-------------------- NVIMTREE ------------------------------
+
+local tree_cb = require'nvim-tree.config'.nvim_tree_callback
+
+g.nvim_tree_disable_default_keybindings = 1
+g.nvim_tree_bindings = {
+  { key = {"<CR>", "o", "<2-LeftMouse>"}, cb = tree_cb("edit") },
+  { key = {"<2-RightMouse>", "<C-]>"},    cb = tree_cb("cd") },
+  { key = "<C-v>",                        cb = tree_cb("vsplit") },
+  { key = "<C-x>",                        cb = tree_cb("split") },
+  { key = "<C-t>",                        cb = tree_cb("tabnew") },
+  { key = "<",                            cb = tree_cb("prev_sibling") },
+  { key = ">",                            cb = tree_cb("next_sibling") },
+  { key = "P",                            cb = tree_cb("parent_node") },
+  { key = "<BS>",                         cb = tree_cb("close_node") },
+  { key = "<S-CR>",                       cb = tree_cb("close_node") },
+  { key = "<Tab>",                        cb = tree_cb("preview") },
+  { key = "K",                            cb = tree_cb("first_sibling") },
+  { key = "J",                            cb = tree_cb("last_sibling") },
+  { key = "I",                            cb = tree_cb("toggle_ignored") },
+  { key = "H",                            cb = tree_cb("toggle_dotfiles") },
+  { key = "R",                            cb = tree_cb("refresh") },
+  { key = "a",                            cb = tree_cb("create") },
+  { key = "d",                            cb = tree_cb("remove") },
+  { key = "r",                            cb = tree_cb("rename") },
+  { key = "<C-r>",                        cb = tree_cb("full_rename") },
+  { key = "x",                            cb = tree_cb("cut") },
+  { key = "c",                            cb = tree_cb("copy") },
+  { key = "p",                            cb = tree_cb("paste") },
+  { key = "y",                            cb = tree_cb("copy_name") },
+  { key = "Y",                            cb = tree_cb("copy_path") },
+  { key = "gy",                           cb = tree_cb("copy_absolute_path") },
+  { key = "[c",                           cb = tree_cb("prev_git_item") },
+  { key = "]c",                           cb = tree_cb("next_git_item") },
+  { key = "-",                            cb = tree_cb("dir_up") },
+  { key = "o",                            cb = tree_cb("system_open") },
+  { key = "q",                            cb = tree_cb("close") },
+}
+
 -------------------- LSP -----------------------------------
 local lsp = require 'lspconfig'
 
--- We use the default settings for gopls and ...
 lsp.gopls.setup{on_attach=require'completion'.on_attach}
-lsp.phpactor.setup{on_attach=require'completion'.on_attach}
+lsp.phpactor.setup{
+  cmd = { install_path_phpactor .. '/bin/phpactor', 'language-server' }
+}
 
-map('n', 't', 'h', { noremap = true })
-map('n', 's', 'j', { noremap = true })
-map('n', 'r', 'k', { noremap = true })
-map('n', 'n', 'l', { noremap = true })
-map('n', '<space>,', '<cmd>lua vim.lsp.diagnostic.goto_prev()<CR>')
-map('n', '<space>;', '<cmd>lua vim.lsp.diagnostic.goto_next()<CR>')
-map('n', '<space>a', '<cmd>lua vim.lsp.buf.code_action()<CR>')
-map('n', '<space>d', '<cmd>lua vim.lsp.buf.definition()<CR>')
-map('n', '<space>f', '<cmd>lua vim.lsp.buf.formatting()<CR>')
-map('n', '<space>h', '<cmd>lua vim.lsp.buf.hover()<CR>')
-map('n', '<space>m', '<cmd>lua vim.lsp.buf.rename()<CR>')
-map('n', '<space>r', '<cmd>lua vim.lsp.buf.references()<CR>')
-map('n', '<space>s', '<cmd>lua vim.lsp.buf.document_symbol()<CR>')
-map('n', '<space>éf', "<cmd>lua require('telescope.builtin').find_files()<CR>")
-map('n', '<space>ég', "<cmd>lua require('telescope.builtin').live_grep()<CR>")
-map('n', '<space>éb', "<cmd>lua require('telescope.builtin').buffers()<CR>")
-map('n', '<space>éh', "<cmd>lua require('telescope.builtin').help_tags()<CR>")
-map('', '<space><space>', ':HopWord<CR>')
-map('n', '<space>pt', ':NvimTreeToggle<CR>')
-map('n', '<space>pf', ':NvimTreeFindFile<CR>')
-map('', '<space>t', ':bprev<CR>')
-map('', '<space>s', ':bnext<CR>')
-map('', '<space>bd', ':bd<CR>')
-map('', '<space>q', ':wq<CR>')
-map('', '<space>w', ':w<CR>')
+-------------------- NEOVIDE -------------------------------
+
+g.neovide_remember_window_size = true
+g.neovide_cursor_antialiasing = true
 
 -------------------- COMMANDS ------------------------------
-cmd 'au TextYankPost * lua vim.highlight.on_yank {on_visual = false}'  
+
+cmd 'autocmd TextYankPost * lua vim.highlight.on_yank {on_visual = false}'  
+cmd "autocmd BufEnter * lua require('completion').on_attach()"
