@@ -3,7 +3,6 @@
 local cmd = vim.cmd  -- to execute Vim commands e.g. cmd('pwd')
 local fn = vim.fn    -- to call Vim functions e.g. fn.bufnr()
 local g = vim.g      -- a table to access global variables
-local bo = vim.bo    -- buffer scoped
 local opt = vim.opt  -- to set options
 
 local function map(mode, lhs, rhs, opts)
@@ -38,11 +37,16 @@ paq {'neovim/nvim-lspconfig'}           -- lsp to config server
 paq {'nvim-lua/plenary.nvim'}           -- dependency of telescope
 paq {'nvim-telescope/telescope.nvim'}   -- jump to file
 paq {'phaazon/hop.nvim'}                -- jump anywhere
+paq {'windwp/nvim-autopairs'}           -- auto pair brackets
 paq {'tpope/vim-surround'}              -- surround text
 paq {'tpope/vim-commentary'}            -- add commentary
 paq {'kyazdani42/nvim-web-devicons'}    -- dependency of nvim-tree
 paq {'kyazdani42/nvim-tree.lua'}        -- file tree
 paq {'akinsho/nvim-bufferline.lua'}     -- buffer design
+paq {'kosayoda/nvim-lightbulb'}         -- add lightbulb for codeAction # TODO does it work ?
+paq {'nvim-lua/popup.nvim'}             -- dependency of lspsaga
+paq {'glepnir/lspsaga.nvim'}            -- lsp ui # TODO codeAction seems dont work
+paq {'glepnir/galaxyline.nvim'}         -- statusline
 
 -------------------- COLORSCHEME ---------------------------
 
@@ -61,9 +65,10 @@ opt.expandtab = true                -- Use spaces instead of tabs
 opt.hidden = true                   -- Enable background buffers
 opt.ignorecase = true               -- Ignore case
 opt.joinspaces = false              -- No double spaces with join
-opt.list = true                     -- Show some invisible characters
+opt.list = false                    -- Show some invisible characters
 opt.number = true                   -- Show line numbers
 opt.relativenumber = true           -- Relative line numbers
+opt.signcolumn = 'yes'              -- Show sign column
 opt.scrolloff = 4                   -- Lines of context
 opt.shiftround = true               -- Round indent
 opt.shiftwidth = 2                  -- Size of an indent
@@ -76,7 +81,7 @@ opt.tabstop = 2                     -- Number of spaces tabs count for
 opt.termguicolors = true            -- True color support
 opt.wildmode = {'list', 'longest'}  -- Command-line completion mode
 opt.wrap = false                    -- Disable line wrap
-bo.swapfile = false
+opt.swapfile = false
 g.mapleader=' '
 g.completion_chain_complete_list = {
   {complete_items = {'lsp', 'snippet', 'ins-complete'}}
@@ -92,11 +97,11 @@ map('n', 'c', 'h', { noremap = true }) -- left
 map('n', 'r', 'l', { noremap = true }) -- right
 map('n', 't', 'j', { noremap = true }) -- up
 map('n', 's', 'k', { noremap = true }) -- down
-map('n', '<C-t>', '<C-u>', { noremap = true }) -- 1/2 page up
-map('n', '<C-s>', '<C-d>', { noremap = true }) -- 1/2 page down
+map('n', '<C-t>', '<C-d>', { noremap = true }) -- 1/2 page down
+map('n', '<C-s>', '<C-u>', { noremap = true }) -- 1/2 page up
 map('n', '<leader>,', '<cmd>lua vim.lsp.diagnostic.goto_prev()<CR>')
 map('n', '<leader>;', '<cmd>lua vim.lsp.diagnostic.goto_next()<CR>')
-map('n', '<leader>a', '<cmd>lua vim.lsp.buf.code_action()<CR>')
+map('n', '<leader>a', '<cmd>:Lspsaga code_action<CR>')
 map('n', '<leader>d', '<cmd>lua vim.lsp.buf.definition()<CR>')
 map('n', '<leader>f', '<cmd>lua vim.lsp.buf.formatting()<CR>')
 map('n', '<leader>h', '<cmd>lua vim.lsp.buf.hover()<CR>')
@@ -198,6 +203,11 @@ map('', '<C-s>', '<C-p>', { noremap = true })
 map('i', '<C-s>', '<C-p>', { noremap = true })
 ]]--
 
+-------------------- AUTOPAIRS -----------------------------
+
+local autopairs = require 'nvim-autopairs'
+autopairs.setup {}
+
 -------------------- TREE-SITTER ---------------------------
 
 local ts = require 'nvim-treesitter.configs'
@@ -276,6 +286,179 @@ lsp.phpactor.setup{
   cmd = { install_path_phpactor .. '/bin/phpactor', 'language-server' }
 }
 
+local saga = require 'lspsaga'
+saga.init_lsp_saga()
+
+-------------------- GALAXYLINE ----------------------------
+
+local gl = require('galaxyline')
+local condition = require('galaxyline.condition')
+local gls = gl.section
+gl.short_line_list = {'NvimTree','vista','dbui','packer'}
+
+local colors = {
+  bg = '#282c34',
+  yellow = '#deb974',
+  cyan = '#008080',
+  darkblue = '#081633',
+  green = '#a0c980',
+  orange = '#FF8800',
+  purple = '#5d4d7a',
+  magenta = '#d16d9e',
+  grey = '#c0c0c0',
+  blue = '#6cb6eb',
+  red = '#ec5f67',
+  pink = '#c981c5',
+  violet=''
+}
+
+local buffer_not_empty = function()
+  if vim.fn.empty(vim.fn.expand('%:t')) ~= 1 then
+    return true
+  end
+  return false
+end
+
+gls.left[2] = {
+  ViMode = {
+    provider = function()
+      local alias = {n = ' n ',i = ' i ',c= ' c ',v= ' v ',V= ' V ', [''] = ' - '}
+      return alias[vim.fn.mode()]
+    end,
+    highlight = {colors.pink},
+  },
+}
+
+gls.left[4] = {
+  FileIcon = {
+    provider = 'FileIcon',
+    condition = condition.buffer_not_empty,
+    highlight = {require('galaxyline.provider_fileinfo').get_file_icon_color},
+  },
+}
+
+gls.left[5] = {
+  FileName = {
+    provider = 'FileName',
+    condition = condition.buffer_not_empty,
+    highlight = {colors.blue, nil}
+  }
+}
+
+gls.left[6] = {
+  GitIcon = {
+    provider = function() return ' ' end,
+    condition = condition.check_git_workspace,
+    separator = ' ',
+    highlight = {colors.violet},
+  }
+}
+
+gls.left[7] = {
+  GitBranch = {
+    provider = 'GitBranch',
+    condition = condition.check_git_workspace,
+    highlight = {colors.yellow},
+    separator = ' ',
+  }
+}
+
+gls.left[8]= {
+  DiagnosticError = {
+    separator = ' ',
+    provider = 'DiagnosticError',
+    icon = '  ',
+    highlight = {colors.red}
+  }
+}
+
+gls.left[9] = {
+  DiagnosticWarn = {
+    provider = 'DiagnosticWarn',
+    icon = '  ',
+    highlight = {colors.yellow},
+  }
+}
+
+gls.left[10] = {
+  DiagnosticHint = {
+    provider = 'DiagnosticHint',
+    icon = '  ',
+    highlight = {colors.cyan},
+  }
+}
+
+gls.left[11] = {
+  DiagnosticInfo = {
+    provider = 'DiagnosticInfo',
+    icon = '  ',
+  }
+}
+
+gls.right[1] = {
+  DiffAdd = {
+    provider = 'DiffAdd',
+    condition = condition.hide_in_width,
+    icon = '  ',
+    highlight = {colors.green},
+  }
+}
+
+gls.right[2] = {
+  DiffModified = {
+    provider = 'DiffModified',
+    condition = condition.hide_in_width,
+    icon = ' 柳',
+    highlight = {colors.orange},
+  }
+}
+
+gls.right[3] = {
+  DiffRemove = {
+    provider = 'DiffRemove',
+    condition = condition.hide_in_width,
+    icon = '  ',
+    highlight = {colors.red},
+  }
+}
+
+gls.right[4] = {
+  LineInfo = {
+    provider = 'LineColumn',
+    highlight = {colors.fg},
+  },
+}
+
+gls.right[5] = {
+  PerCent = {
+    provider = 'LinePercent',
+    highlight = {colors.fg},
+  }
+}
+
+gls.short_line_left[1] = {
+  BufferType = {
+    provider = 'FileTypeName',
+    separator = ' ',
+    highlight = {colors.pink}
+  }
+}
+
+gls.short_line_right[2] = {
+  BufferIcon = {
+    provider= 'BufferIcon',
+    highlight = {colors.fg}
+  }
+}
+
+gls.short_line_left[3] = {
+  SFileName = {
+    provider =  'SFileName',
+    condition = condition.buffer_not_empty,
+    highlight = {colors.blue}
+  }
+}
+
 -------------------- NEOVIDE -------------------------------
 
 g.neovide_remember_window_size = true
@@ -283,5 +466,6 @@ g.neovide_cursor_antialiasing = true
 
 -------------------- COMMANDS ------------------------------
 
-cmd 'autocmd TextYankPost * lua vim.highlight.on_yank {on_visual = false}'  
+cmd "autocmd TextYankPost * lua vim.highlight.on_yank {on_visual = false}"
 cmd "autocmd BufEnter * lua require('completion').on_attach()"
+cmd "autocmd CursorHold,CursorHoldI * lua require('nvim-lightbulb').update_lightbulb()"
