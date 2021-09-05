@@ -218,7 +218,7 @@ local lsp = require 'lspconfig'
 lsp.gopls.setup { on_attach = require('completion').on_attach }
 
 local command_intelephense = path_intelephense .. '/node_modules/.bin/intelephense'
-if fn.executable(command_intelephense) == 0 then
+if fn.executable(command_intelephense .. '.cmd') ~= 0 then
   command_intelephense = command_intelephense .. '.cmd'
 end
 
