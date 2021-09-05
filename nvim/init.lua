@@ -217,8 +217,13 @@ local lsp = require 'lspconfig'
 
 lsp.gopls.setup { on_attach = require('completion').on_attach }
 
+local command_intelephense = path_intelephense .. '/node_modules/.bin/intelephense'
+if fn.executable(command_intelephense) == 0 then
+  command_intelephense = command_intelephense .. '.cmd'
+end
+
 lsp.intelephense.setup {
-  cmd = { path_intelephense .. '/node_modules/.bin/intelephense.cmd', '--stdio' },
+  cmd = { command_intelephense, '--stdio' },
   filetypes = { 'php' },
   licenceKey = fn.stdpath('data') .. '/intelephense.licence',
   on_attach = require('completion').on_attach,
