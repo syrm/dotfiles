@@ -13,17 +13,18 @@ end
 
 --------------------- INIT ---------------------------------
 
-local install_path_paq = fn.stdpath('data') .. '/site/pack/paqs/start/paq-nvim'
-
-if fn.isdirectory(install_path_paq) == 0 then
-  fn.system({'git', 'clone', '--depth=1', 'https://github.com/savq/paq-nvim.git', install_path_paq})
+local path_paq = fn.stdpath('data') .. '/site/pack/paqs/start/paq-nvim'
+if fn.executable('git') == 0 then
+  print("ERROR `git` executable not found.")
+elseif fn.isdirectory(path_paq) == 0 then
+  fn.system({'git', 'clone', '--depth=1', 'https://github.com/savq/paq-nvim.git', path_paq})
 end
 
-local install_path_phpactor = fn.stdpath('data') .. '/site/pack/phpactor'
-
-if fn.isdirectory(install_path_phpactor) == 0 then
-  fn.system({'git', 'clone', '--depth=1', 'https://github.com/phpactor/phpactor.git', install_path_phpactor})
-  fn.system({'composer', 'install', '-d', install_path_phpactor})
+local path_intelephense = fn.stdpath('data') .. '/site/pack/intelephense'
+if fn.executable('npm') == 0 then
+  print("ERROR `npm` executable not found.")
+elseif fn.isdirectory(path_intelephense) == 0 then
+  fn.system({'npm', 'install', '--progress', '--prefix=' .. path_intelephense, 'intelephense'})
 end
 
 -------------------- PLUGINS -------------------------------
@@ -43,7 +44,7 @@ paq {'tpope/vim-commentary'}            -- add commentary
 paq {'kyazdani42/nvim-web-devicons'}    -- dependency of nvim-tree
 paq {'kyazdani42/nvim-tree.lua'}        -- file tree
 paq {'akinsho/nvim-bufferline.lua'}     -- buffer design
-paq {'kosayoda/nvim-lightbulb'}         -- add lightbulb for codeAction # TODO does it work ?
+-- paq {'kosayoda/nvim-lightbulb'}         -- add lightbulb for codeAction # TODO does it work ?
 paq {'nvim-lua/popup.nvim'}             -- dependency of lspsaga
 paq {'glepnir/lspsaga.nvim'}            -- lsp ui # TODO codeAction seems dont work
 paq {'glepnir/galaxyline.nvim'}         -- statusline
@@ -83,35 +84,35 @@ opt.wildmode = {'list', 'longest'}  -- Command-line completion mode
 opt.wrap = false                    -- Disable line wrap
 opt.swapfile = false
 g.mapleader=' '
-g.completion_chain_complete_list = {
-  {complete_items = {'lsp', 'snippet', 'ins-complete'}}
-}
+g.surround_no_mappings = true
 
 -------------------- MAPPINGS ------------------------------
 
-map('', '<leader>c', '"+y')       -- Copy to clipboard in normal, visual, select and operator modes
+map('', '<leader>c', '"+y')       -- Copy to clipboard
+map('', '<leader>v', '"+p')       -- Paste from clipboard
 map('i', '<C-u>', '<C-g>u<C-u>')  -- Make <C-u> undo-friendly
 map('i', '<C-w>', '<C-g>u<C-w>')  -- Make <C-w> undo-friendly
 
-map('n', 'c', 'h', { noremap = true }) -- left
-map('n', 'r', 'l', { noremap = true }) -- right
-map('n', 't', 'j', { noremap = true }) -- up
-map('n', 's', 'k', { noremap = true }) -- down
+map('', 'c', 'h', { noremap = true }) -- left
+map('', 'r', 'l', { noremap = true }) -- right
+map('', 't', 'j', { noremap = true }) -- up
+map('', 's', 'k', { noremap = true }) -- down
+map('', 'k', 'r', { noremap = true }) -- replace single character
 map('n', '<C-t>', '<C-d>', { noremap = true }) -- 1/2 page down
 map('n', '<C-s>', '<C-u>', { noremap = true }) -- 1/2 page up
-map('n', '<leader>,', '<cmd>lua vim.lsp.diagnostic.goto_prev()<CR>')
-map('n', '<leader>;', '<cmd>lua vim.lsp.diagnostic.goto_next()<CR>')
-map('n', '<leader>a', '<cmd>:Lspsaga code_action<CR>')
-map('n', '<leader>d', '<cmd>lua vim.lsp.buf.definition()<CR>')
-map('n', '<leader>f', '<cmd>lua vim.lsp.buf.formatting()<CR>')
-map('n', '<leader>h', '<cmd>lua vim.lsp.buf.hover()<CR>')
-map('n', '<leader>m', '<cmd>lua vim.lsp.buf.rename()<CR>')
-map('n', '<leader>r', '<cmd>lua vim.lsp.buf.references()<CR>')
-map('n', '<leader>s', '<cmd>lua vim.lsp.buf.document_symbol()<CR>')
-map('n', '<leader>éf', "<cmd>lua require('telescope.builtin').find_files()<CR>")
-map('n', '<leader>ég', "<cmd>lua require('telescope.builtin').live_grep()<CR>")
-map('n', '<leader>éb', "<cmd>lua require('telescope.builtin').buffers()<CR>")
-map('n', '<leader>éh', "<cmd>lua require('telescope.builtin').help_tags()<CR>")
+map('n', 'ga', "<cmd>lua require('lspsaga.codeaction').code_action()<CR>")
+map('n', 'gi', "<cmd>lua require('lspsaga.provider').lsp_finder()<CR>")
+map('n', 'gh', "<cmd>lua require('lspsaga.hover').render_hover_doc()<CR>")
+map('n', 'gd', '<cmd>lua vim.lsp.buf.definition()<CR>')
+map('n', 'gf', '<cmd>lua vim.lsp.buf.formatting()<CR>')
+map('n', 'gm', "<cmd>lua require('lspsaga.rename').rename()<CR>")
+--map('n', 'gh', '<cmd>lua vim.lsp.buf.hover()<CR>')
+map('n', 'gr', '<cmd>lua vim.lsp.buf.references()<CR>')
+map('n', 'gs', '<cmd>lua vim.lsp.buf.document_symbol()<CR>')
+map('n', 'éf', "<cmd>lua require('telescope.builtin').find_files()<CR>")
+map('n', 'ég', "<cmd>lua require('telescope.builtin').live_grep()<CR>")
+map('n', 'éb', "<cmd>lua require('telescope.builtin').buffers()<CR>")
+map('n', 'éh', "<cmd>lua require('telescope.builtin').help_tags()<CR>")
 map('', '<leader><leader>', ':HopWord<CR>')
 map('', '<leader>q', ':wq<CR>')
 map('', '<leader>w', ':w<CR>')
@@ -131,78 +132,6 @@ map('n', '<leader>pt', ':NvimTreeToggle<CR>')
 map('n', '<leader>pf', ':NvimTreeFindFile<CR>')
 map('n', '<leader>pp', ':NvimTreeFocus<CR>')
 
---[[
-map('n', 'é', 'w', { noremap = true }) -- move foreward one word
-map('n', 'É', 'W', { noremap = true }) -- foreward word
-map('n', 'w', '<C-w>', { noremap = true })
-map2('n', 'c', 'h', { noremap = true }) -- left
-map2('n', 'r', 'l', { noremap = true }) -- right
-map2('n', 't', 'j', { noremap = true }) -- up
-map2('n', 's', 'k', { noremap = true }) -- down
-map('n', 'C', 'H', { noremap = true }) -- home cursor - goto first line on screen
-map('n', 'R', 'L', { noremap = true }) -- goto last line
-map('n', 'T', 'J', { noremap = true }) -- join current line with the next line
-map('n', 'S', 'K', { noremap = true }) -- unbound
-map('n', 'zs', 'zj', { noremap = true }) -- ? move down one line
-map('n', 'zt', 'zk', { noremap = true }) -- ? move up one line
-map('n', 'j', 't', { noremap = true })   -- jump before character found
-map('n', 'J', 'T', { noremap = true })   -- backward version of t
-map('n', 'l', 'c', { noremap = true })   -- change command
-map('n', 'L', 'C', { noremap = true })   -- change to end of line
-map('n', 'h', 'r', { noremap = true })   -- replace single character
-map('n', 'H', 'R', { noremap = true })   -- replace mode - replaces through end of current line, then inserts
-map('n', 'k', 's', { noremap = true })   -- substitute single character with new text
-map('n', 'K', 'S', { noremap = true })   -- substitute entire line - deletes line, enters insertion mode
-map('n', ']k', ']s', { noremap = true }) -- ?
-map('n', '[k', '[s', { noremap = true }) -- ?
-map('n', 'gs', 'gk', { noremap = true }) -- ?
-map('n', 'gt', 'gj', { noremap = true }) -- ?
-map('n', 'wt', '<C-w>j', { noremap = true }) -- ?
-map('n', 'ws', '<C-w>k', { noremap = true }) -- ?
-map('n', 'wc', '<C-w>h', { noremap = true }) -- ?
-map('n', 'wr', '<C-w>l', { noremap = true }) -- ?
-map('n', 'wd', '<C-w>c', { noremap = true }) -- ?
-map('n', 'wo', '<C-w>s', { noremap = true }) -- ?
-map('n', 'wp', '<C-w>o', { noremap = true }) -- ?
-
-map('o', 'aé', 'aw', { noremap = true })
-map('o', 'aÉ', 'aW', { noremap = true })
-map('o', 'ié', 'iw', { noremap = true })
-map('o', 'iÉ', 'iW', { noremap = true })
-map('n', 'W', '<C-w><C-w>', { noremap = true })
-
-map('n', 'T', 'J', { noremap = true })
-map('n', 'S', 'K', { noremap = true })
-map('n', 'zs', 'zj', { noremap = true })
-map('n', 'zt', 'zk', { noremap = true })
-map('n', 'j', 't', { noremap = true })
-map('n', 'J', 'T', { noremap = true })
-map('n', 'l', 'c', { noremap = true })
-map('n', 'L', 'C', { noremap = true })
-map('n', 'h', 'r', { noremap = true })
-map('n', 'H', 'R', { noremap = true })
-map('n', 'k', 's', { noremap = true })
-map('n', 'K', 'S', { noremap = true })
-map('n', 'gs', 'gk', { noremap = true })
-map('n', 'gt', 'gj', { noremap = true })
-map('n', 'gb', 'gT', { noremap = true })
-map('n', 'gé', 'gT', { noremap = true })
-map('n', 'g"', 'g0', { noremap = true })
-map('n', 'wt', '<C-w>j', { noremap = true })
-map('n', 'ws', '<C-w>k', { noremap = true })
-map('n', 'wc', '<C-w>h', { noremap = true })
-map('n', 'wr', '<C-w>l', { noremap = true })
-map('n', 'wd', '<C-w>c', { noremap = true })
-map('n', 'wo', '<C-w>s', { noremap = true })
-map('n', 'wp', '<C-w>o', { noremap = true })
-map('n', 'è', 'circon', { noremap = true })
-map('n', 'È', '0', { noremap = true })
-map('', '<C-t>', '<C-n>', { noremap = true })
-map('i', '<C-t>', '<C-n>', { noremap = true })
-map('', '<C-s>', '<C-p>', { noremap = true })
-map('i', '<C-s>', '<C-p>', { noremap = true })
-]]--
-
 -------------------- AUTOPAIRS -----------------------------
 
 local autopairs = require 'nvim-autopairs'
@@ -211,39 +140,44 @@ autopairs.setup {}
 -------------------- TREE-SITTER ---------------------------
 
 local ts = require 'nvim-treesitter.configs'
-ts.setup {ensure_installed = 'maintained', highlight = {enable = true}}
+ts.setup {
+  ensure_installed = 'maintained',
+  highlight = {enable = true},
+  indent = {enable = true}
+}
 
 -------------------- BUFFER --------------------------------
 
 local bl = require 'bufferline'
 bl.setup{
-    options = {
-      view = "multiwindow",
-      numbers = function(opts) 
-        return string.format('%s', opts.raise(opts.ordinal))
-      end,
-      modified_icon = '●',
-      left_trunc_marker = '',
-      right_trunc_marker = '',
-      max_name_length = 18,
-      max_prefix_length = 25, -- prefix used when a buffer is deduplicated
-      tab_size = 20,
-      diagnostics ="nvim_lsp",
-      show_buffer_close_icons = false,
-      show_close_icon = false,
-      diagnostics_indicator = function(count, level)
-        local icon = level:match("error") and "" or ""
-        return " " .. icon .. count
-      end,
-      separator_style = "thin",
-    }
+  options = {
+    view = "multiwindow",
+    numbers = function(opts) 
+      return string.format('%s', opts.raise(opts.ordinal))
+    end,
+    modified_icon = '●',
+    left_trunc_marker = '',
+    right_trunc_marker = '',
+    max_name_length = 18,
+    max_prefix_length = 25, -- prefix used when a buffer is deduplicated
+    tab_size = 20,
+    diagnostics ="nvim_lsp",
+    show_buffer_close_icons = false,
+    show_close_icon = false,
+    diagnostics_indicator = function(count, level)
+      local icon = level:match("error") and "" or ""
+      return " " .. icon .. count
+    end,
+    separator_style = "thin",
   }
+}
 
 -------------------- NVIMTREE ------------------------------
 
 local tree_cb = require'nvim-tree.config'.nvim_tree_callback
 
 g.nvim_tree_disable_default_keybindings = 1
+g.nvim_tree_root_folder_modifier = ':t'
 g.nvim_tree_bindings = {
   { key = {"<CR>", "o", "<2-LeftMouse>"}, cb = tree_cb("edit") },
   { key = {"<2-RightMouse>", "<C-]>"},    cb = tree_cb("cd") },
@@ -281,9 +215,20 @@ g.nvim_tree_bindings = {
 -------------------- LSP -----------------------------------
 local lsp = require 'lspconfig'
 
-lsp.gopls.setup{on_attach=require'completion'.on_attach}
-lsp.phpactor.setup{
-  cmd = { install_path_phpactor .. '/bin/phpactor', 'language-server' }
+lsp.gopls.setup { on_attach = require('completion').on_attach }
+
+lsp.intelephense.setup {
+  cmd = { path_intelephense .. '/node_modules/.bin/intelephense.cmd', '--stdio' },
+  filetypes = { 'php' },
+  licenceKey = fn.stdpath('data') .. '/intelephense.licence',
+  on_attach = require('completion').on_attach,
+}
+
+vim.g.completion_matching_strategy_list = {'substring', 'exact', 'fuzzy', 'all'}
+vim.g.completion_chain_complete_list = {
+  {complete_itemns = {'lsp', 'ins-complete'}},
+  {mode = '<c-p>'},
+  {mode = '<c-n>'}
 }
 
 local saga = require 'lspsaga'
@@ -468,4 +413,4 @@ g.neovide_cursor_antialiasing = true
 
 cmd "autocmd TextYankPost * lua vim.highlight.on_yank {on_visual = false}"
 cmd "autocmd BufEnter * lua require('completion').on_attach()"
-cmd "autocmd CursorHold,CursorHoldI * lua require('nvim-lightbulb').update_lightbulb()"
+cmd "autocmd FileType php setlocal shiftwidth=4 softtabstop=4"
