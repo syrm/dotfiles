@@ -32,7 +32,7 @@ end
 cmd 'packadd paq-nvim'                  -- load the package manager
 local paq = require('paq-nvim').paq     -- a convenient alias
 paq {'savq/paq-nvim', opt = true}       -- paq-nvim manages itself
-paq {'nvim-lua/completion-nvim'}        -- autocompletion
+paq {'hrsh7th/nvim-compe'}              -- autocompletion
 paq {'nvim-treesitter/nvim-treesitter'} -- syntax color
 paq {'neovim/nvim-lspconfig'}           -- lsp to config server
 paq {'nvim-lua/plenary.nvim'}           -- dependency of telescope
@@ -61,7 +61,7 @@ g.tokyonight_transparent_sidebar=true
 
 -------------------- OPTIONS -------------------------------
 
-opt.completeopt = {'menuone', 'noinsert', 'noselect'}  -- Completion options
+opt.completeopt = {'menuone', 'noselect'}  -- Completion options
 opt.expandtab = true                -- Use spaces instead of tabs
 opt.hidden = true                   -- Enable background buffers
 opt.ignorecase = true               -- Ignore case
@@ -80,7 +80,6 @@ opt.splitbelow = true               -- Put new windows below current
 opt.splitright = true               -- Put new windows right of current
 opt.tabstop = 2                     -- Number of spaces tabs count for
 opt.termguicolors = true            -- True color support
-opt.wildmode = {'list', 'longest'}  -- Command-line completion mode
 opt.wrap = false                    -- Disable line wrap
 opt.swapfile = false
 g.mapleader=' '
@@ -120,6 +119,7 @@ map('', '<leader>w', ':w<CR>')
 -- <Tab> to navigate the completion menu
 map('i', '<C-t>', 'pumvisible() ? "\\<C-p>" : "\\<C-t>"', {expr = true})
 map('i', '<C-s>', 'pumvisible() ? "\\<C-n>" : "\\<C-s>"', {expr = true})
+map('i', '<Tab>', "compe#confirm({'keys': '<CR>', 'select': v:true})", {silent = true, expr = true})
 
 map('n', '<C-l>', '<cmd>noh<CR>')    -- Clear highlights
 map('n', '<leader>o', 'm`o<Esc>``')  -- Insert a newline in normal mode
@@ -132,14 +132,61 @@ map('n', '<leader>pt', ':NvimTreeToggle<CR>')
 map('n', '<leader>pf', ':NvimTreeFindFile<CR>')
 map('n', '<leader>pp', ':NvimTreeFocus<CR>')
 
+-------------------- COMPLETION ----------------------------
+
+local cmp = require('compe')
+cmp.setup {
+  enabled = true,
+  autocomplete = true,
+  preselect = 'enable',
+  min_length = 2,
+  documentation = {
+    border = 'solid',
+    winhighlight = 'NormalFloat:CompeDocumentation,FloatBorder:CompeDocumentationBorder'
+  },
+  source = {
+    path = true,
+    buffer = {
+      priority = 1
+    },
+    nvim_lua = true,
+    nvim_lsp = {
+      enable = true,
+      priority = 100
+    }
+  }
+}
+
+-------------------- TELESCOPE -----------------------------
+
+local telescope = require('telescope')
+telescope.setup {
+  defaults = {
+    mappings = {
+      i = {
+        ['<C-n>'] = false,
+        ['<C-p>'] = false,
+        ['j'] = false,
+        ['k'] = false,
+        ['<C-t>'] = require('telescope.actions').move_selection_next,
+        ['<C-s>'] = require('telescope.actions').move_selection_previous,
+        ['qq'] = require('telescope.actions').close
+      },
+      n = {
+        ['qq'] = require('telescope.actions').close
+      },
+    }
+  }
+}
+
 -------------------- AUTOPAIRS -----------------------------
 
-local autopairs = require 'nvim-autopairs'
+local autopairs = require('nvim-autopairs')
 autopairs.setup {}
 
 -------------------- TREE-SITTER ---------------------------
 
-local ts = require 'nvim-treesitter.configs'
+local ts = require('nvim-treesitter.configs')
 ts.setup {
   ensure_installed = 'maintained',
   highlight = {enable = true},
@@ -148,7 +195,7 @@ ts.setup {
 
 -------------------- BUFFER --------------------------------
 
-local bl = require 'bufferline'
+local bl = require('bufferline')
 bl.setup{
   options = {
     view = "multiwindow",
@@ -174,7 +221,7 @@ bl.setup{
 
 -------------------- NVIMTREE ------------------------------
 
-local tree_cb = require'nvim-tree.config'.nvim_tree_callback
+local tree_cb = require('nvim-tree.config').nvim_tree_callback
 
 g.nvim_tree_disable_default_keybindings = 1
 g.nvim_tree_root_folder_modifier = ':t'
@@ -213,7 +260,7 @@ g.nvim_tree_bindings = {
 }
 
 -------------------- LSP -----------------------------------
-local lsp = require 'lspconfig'
+local lsp = require('lspconfig')
 
 lsp.gopls.setup { on_attach = require('completion').on_attach }
 
@@ -236,7 +283,7 @@ vim.g.completion_chain_complete_list = {
   {mode = '<c-n>'}
 }
 
-local saga = require 'lspsaga'
+local saga = require('lspsaga')
 saga.init_lsp_saga()
 
 -------------------- GALAXYLINE ----------------------------
