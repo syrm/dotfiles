@@ -262,7 +262,7 @@ g.nvim_tree_bindings = {
 -------------------- LSP -----------------------------------
 local lsp = require('lspconfig')
 
-lsp.gopls.setup { on_attach = require('completion').on_attach }
+lsp.gopls.setup { on_attach = require('compe').on_attach }
 
 local command_intelephense = path_intelephense .. '/node_modules/.bin/intelephense'
 if fn.executable(command_intelephense .. '.cmd') ~= 0 then
@@ -275,7 +275,7 @@ lsp.intelephense.setup {
   init_options = {
     licenceKey = fn.stdpath('data') .. '/intelephense.licence',
   },
-  on_attach = require('completion').on_attach,
+  on_attach = require('compe').on_attach,
 }
 
 vim.g.completion_matching_strategy_list = {'substring', 'exact', 'fuzzy', 'all'}
@@ -466,5 +466,4 @@ g.neovide_cursor_antialiasing = true
 -------------------- COMMANDS ------------------------------
 
 cmd "autocmd TextYankPost * lua vim.highlight.on_yank {on_visual = false}"
-cmd "autocmd BufEnter * lua require('completion').on_attach()"
 cmd "autocmd FileType php setlocal shiftwidth=4 softtabstop=4"
