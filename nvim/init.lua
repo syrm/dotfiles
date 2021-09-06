@@ -272,7 +272,9 @@ end
 lsp.intelephense.setup {
   cmd = { command_intelephense, '--stdio' },
   filetypes = { 'php' },
-  licenceKey = fn.stdpath('data') .. '/intelephense.licence',
+  init_options = {
+    licenceKey = fn.stdpath('data') .. '/intelephense.licence',
+  },
   on_attach = require('completion').on_attach,
 }
 
