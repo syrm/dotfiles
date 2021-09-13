@@ -1,3 +1,10 @@
+-- X tab dont insert tab
+-- X copy paste system dont work 
+-- copy paste dont work on telescope etc (maybe use ctrl+v)
+-- delete word $toto should delete $toto and not only $
+-- auto reload file written outside
+-- téléscope dont find hidden files (.env)
+-- copy file cross nvim
 -------------------- HELPERS -------------------------------
 
 local cmd = vim.cmd  -- to execute Vim commands e.g. cmd('pwd')
@@ -87,8 +94,10 @@ g.surround_no_mappings = true
 
 -------------------- MAPPINGS ------------------------------
 
-map('', '<leader>c', '"+y')       -- Copy to clipboard
-map('', '<leader>v', '"+p')       -- Paste from clipboard
+map('', '<C-c>', '"+y')       -- Copy to clipboard
+map('', '<C-v>', '"+p')       -- Paste from clipboard
+map('i', '<C-c>', '<ESC>"+y<ESC>A') -- Copy to clipboard
+map('i', '<C-v>', '<ESC>"+p<ESC>A') -- Paste from clipboard
 map('i', '<C-u>', '<C-g>u<C-u>')  -- Make <C-u> undo-friendly
 map('i', '<C-w>', '<C-g>u<C-w>')  -- Make <C-w> undo-friendly
 
@@ -119,7 +128,7 @@ map('', '<leader>w', ':w<CR>')
 -- <Tab> to navigate the completion menu
 map('i', '<C-t>', 'pumvisible() ? "\\<C-p>" : "\\<C-t>"', {expr = true})
 map('i', '<C-s>', 'pumvisible() ? "\\<C-n>" : "\\<C-s>"', {expr = true})
-map('i', '<Tab>', "compe#confirm({'keys': '<CR>', 'select': v:true})", {silent = true, expr = true})
+map('i', '<C-space>', "compe#confirm({'keys': '<CR>', 'select': v:true})", {silent = true, expr = true})
 
 map('n', '<C-l>', '<cmd>noh<CR>')    -- Clear highlights
 map('n', '<leader>o', 'm`o<Esc>``')  -- Insert a newline in normal mode
